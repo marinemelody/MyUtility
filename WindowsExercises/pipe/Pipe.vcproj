@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="..\"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -208,12 +209,48 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
+			<File
+				RelativePath=".\TestHeader.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
+		</Filter>
+		<Filter
+			Name="Functional"
+			>
+			<File
+				RelativePath="..\tools\Lock.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tools\LockType.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tools\Noncopyable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tools\Serialize.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tools\Singleton.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Pipe"
+			>
+			<File
+				RelativePath=".\PipeAnonymous.h"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"

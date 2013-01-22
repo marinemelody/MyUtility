@@ -10,7 +10,7 @@ public:
     {
         if (!_inst)
         {
-            LOCK_FREE(lock);
+            LOCK_SPIN_LOCAL(lock);
             if (!_inst)
             {
                 _inst = new T;

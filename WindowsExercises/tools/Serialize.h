@@ -47,7 +47,7 @@ private:
 
 public:
     template<typename T>
-    Serialization& operator <<(T& t)
+    Serialization& operator <<(T const& t)
     {
         m_packet.append((char*)&t, sizeof(T));
         return *this;
@@ -62,7 +62,7 @@ public:
         return *this;
     }
     template<>
-    Serialization& operator <<(string& t)
+    Serialization& operator <<(string const& t)
     {
         m_packet.append(t.c_str(), t.length());
         m_packet.fill(0,1);
@@ -88,7 +88,7 @@ public:
     template<typename T>
     Deserialize& operator >>(T& t)
     {
-        assert(m_packet.size()<=(sizeof(T)+_off));
+        assert(m_packet.size()>=(sizeof(T)+_off));
         memcpy(&t, m_packet.m_buff.c_str()+_off, sizeof(T));
         _off += sizeof(T);
         return *this;
@@ -96,7 +96,7 @@ public:
     template<typename T>
     Deserialize& operator >>(T* t)
     {
-        assert(m_packet.size()<=(sizeof(typename TraitPoint<T>::Value_type)+_off));
+        assert(m_packet.size()>=(sizeof(typename TraitPoint<T>::Value_type)+_off));
         if (t)
             *this >> *t;
         else
@@ -108,7 +108,7 @@ public:
     {
         string::size_type _end = m_packet.m_buff.find_first_of((char)0, _off);
         assert(_end!=string::npos);
-        t.append(m_packet.m_buff, _off, _end-_off+1);
+        t.append(m_packet.m_buff, _off, _end-_off);
         _off = _end+1;
         return *this;
     }

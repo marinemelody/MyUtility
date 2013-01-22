@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Noncopyable.h"
+#include "emmintrin.h"
 
 class LockNull
 {
@@ -21,11 +22,11 @@ private:
 };
 
 //Synchronization: Lock Free
-class LockFree : protected NonCopyable
+class LockSpin : protected NonCopyable
 {
 public:
-    LockFree():l(0){}
-    inline void acquire(){while(InterlockedCompareExchangeAcquire(&l, 1, 0)!=0){};}
+    LockSpin():l(0){}
+    inline void acquire(){while(InterlockedCompareExchangeAcquire(&l, 1, 0)!=0){_mm_pause();};}
     inline void release(){InterlockedExchange(&l, 0);}
 private:
     LONG l;
@@ -33,14 +34,14 @@ private:
 
 //利用静态值值类型的常量初始化在编译时存储的特性，从而避开多线程初始化的陷阱
 //注意平台编译特性，使用前测试该编译特性
-class LockFreeLocal
+class LockSpinLocal
 {
 public:
-    LockFreeLocal(LONG& lock):l(lock)
+    LockSpinLocal(LONG& lock):l(lock)
     {
         acquire();
     }
-    ~LockFreeLocal()
+    ~LockSpinLocal()
     {
         release();
     }
@@ -49,6 +50,6 @@ public:
 private:
     LONG& l;
 };
-#define LOCK_FREE(name) \
+#define LOCK_SPIN_LOCAL(name) \
     static LONG _var##name = 0;\
-    LockFreeLocal _l##name(_var##name);
+    LockSpinLocal _l##name(_var##name);

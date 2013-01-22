@@ -41,9 +41,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\"
+				AdditionalIncludeDirectories="..\;..\python"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -115,6 +116,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="..\"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -195,6 +197,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\TraceException.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -210,7 +216,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TestHeader.h"
+				RelativePath=".\TraceException.h"
 				>
 			</File>
 		</Filter>
@@ -232,6 +238,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\tools\Memory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\tools\Noncopyable.h"
 				>
 			</File>
@@ -243,12 +253,28 @@
 				RelativePath="..\tools\Singleton.h"
 				>
 			</File>
+			<File
+				RelativePath="..\tools\TBuffer.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Pipe"
 			>
 			<File
 				RelativePath=".\PipeAnonymous.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Arithmetic"
+			>
+			<File
+				RelativePath="..\Arithmetic\Arithmetic.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\Arithmetic\Arithmetic.h"
 				>
 			</File>
 		</Filter>

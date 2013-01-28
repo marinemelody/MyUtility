@@ -27,7 +27,7 @@ public:
     PythonTraceBack();
     ~PythonTraceBack();
 
-    bool Inited(){return (pFuncTB!=NULL);};
+    bool Init();
 
     std::string TraceBack();
 private:

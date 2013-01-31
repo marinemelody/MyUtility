@@ -1,6 +1,10 @@
 #pragma once
 
+#ifdef _DEBUG
+#undef _DEBUG
 #include "python.h"
+#define _DEBUG
+#endif
 #include <set>
 #include <string>
 

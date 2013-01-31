@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\;..\python"
+				AdditionalIncludeDirectories=".\;..\;..\..\python\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -63,6 +63,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\python\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -227,56 +228,72 @@
 			>
 		</Filter>
 		<Filter
-			Name="Functional"
+			Name="Tools"
 			>
-			<File
-				RelativePath="..\tools\Lock.h"
+			<Filter
+				Name="Utility"
 				>
-			</File>
-			<File
-				RelativePath="..\tools\LockType.h"
+				<File
+					RelativePath="..\Utility\TextManipulate.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\Utility\TextManipulate.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Arithmetic"
 				>
-			</File>
-			<File
-				RelativePath="..\tools\Memory.h"
+				<File
+					RelativePath="..\Arithmetic\Arithmetic.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\Arithmetic\Arithmetic.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Functional"
 				>
-			</File>
-			<File
-				RelativePath="..\tools\Noncopyable.h"
+				<File
+					RelativePath="..\Functional\Lock.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\LockType.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\Memory.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\Noncopyable.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\Serialize.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\Singleton.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\TBuffer.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Pipe"
 				>
-			</File>
-			<File
-				RelativePath="..\tools\Serialize.h"
-				>
-			</File>
-			<File
-				RelativePath="..\tools\Singleton.h"
-				>
-			</File>
-			<File
-				RelativePath="..\tools\TBuffer.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Pipe"
-			>
-			<File
-				RelativePath=".\PipeAnonymous.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Arithmetic"
-			>
-			<File
-				RelativePath="..\Arithmetic\Arithmetic.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\Arithmetic\Arithmetic.h"
-				>
-			</File>
+				<File
+					RelativePath=".\PipeAnonymous.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"

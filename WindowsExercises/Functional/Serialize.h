@@ -118,4 +118,3 @@ public:
         return *this>> t;
     }
 };
-

@@ -48,7 +48,7 @@ namespace TextManipulate
     //@return:true(no error occured)
     bool ConvertTradition2Simple(std::string const& strin, std::string& strout);
     bool ConvertTradition2Simple(std::wstring const& strin, std::wstring& strout);
-    //转码到UNICODE:936简体中文,950繁体中文
+    //转码到UNICODE:936简体中文,950繁体中文,65001UTF8
     //@return:true(no error occured)
     bool ConvertToUnicode(std::string const& strin, std::wstring& strout, UINT cp = 936);
     //转码到本地码:936简体中文,950繁体中文

@@ -25,8 +25,34 @@ DWORD WINAPI MyThread2( LPVOID lpParam )
 
 #define gPipeAnonymous INSTANCE_SINGLETON(PipeAnonymous)
 
+#include "BenchMark.h"
+
+
+//#define DEFINE_SERILIZE(param) \
+//Deserialize& operator>>(Deserialize& dsr, )\
+//{
+//    return dsr/* & param*/;\
+//}\
+
+struct Test
+{
+    int a,b,c;
+    //DEFINE_SERILIZE(a&b&c);
+};
+#define DEFINE_SERIAL(cls,...) \
+Deserialize& operator>>(Deserialize& dsr, cls ss)\
+{\
+    return dsr & ss.a&ss.b&ss.c;\
+}\
+
+DEFINE_SERIAL(Test)
+
 int _tmain(int argc, _TCHAR* argv[])
 {
+    Packet packet;
+    Deserialize dsr(packet);
+    Test a={0};
+    dsr >>  a;
     //try
     //{
     //    int* a = NULL;
@@ -90,18 +116,7 @@ int _tmain(int argc, _TCHAR* argv[])
     //        WriteFile(h_write, p.buff(), p.size(), &num, NULL);
     //    }
     //} while (0);
-
-    int b = 0;
-    int* c = &b;
-    std::string a = "0";
-    Packet msg;
-    Serialization srl(msg);
-    srl << c
-        << a;
-    Deserialize drl(msg) ;
-    drl >> c
-        >> a;
-    typeid(c);
+    BenchMark::BM_Text();
 
     system("pause");
     return 0;

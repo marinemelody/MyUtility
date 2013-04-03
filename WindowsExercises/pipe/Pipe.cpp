@@ -23,8 +23,6 @@ DWORD WINAPI MyThread2( LPVOID lpParam )
     return 0;
 }
 
-#define gPipeAnonymous INSTANCE_SINGLETON(PipeAnonymous)
-
 #include "BenchMark.h"
 
 
@@ -47,12 +45,12 @@ Deserialize& operator>>(Deserialize& dsr, cls ss)\
 
 DEFINE_SERIAL(Test)
 
+#include "Functional/DbgModule.h"
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-    Packet packet;
-    Deserialize dsr(packet);
-    Test a={0};
-    dsr >>  a;
+
+    ExportCurTraceBack();
     //try
     //{
     //    int* a = NULL;

@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "TraceException.h"
+#include "PyTrace.h"
 
 
 PythonTraceBack::PythonTraceBack():pModule(NULL), pFuncTB(NULL)

@@ -17,4 +17,6 @@
 
 #include "windows.h"
 
+#include "TypeDefine.h"
+
 // TODO: reference additional headers your program requires here

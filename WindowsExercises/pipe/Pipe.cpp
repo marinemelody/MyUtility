@@ -11,6 +11,7 @@ using namespace std;
 #include "PipeAnonymous.h"
 
 #include "Arithmetic/Arithmetic.h"
+#include "Utility/TextManipulate.h"
 
 
 DWORD WINAPI MyThread( LPVOID lpParam )
@@ -47,48 +48,90 @@ DEFINE_SERIAL(Test)
 
 #include "Functional/DbgModule.h"
 
+
+class AllocVirtual
+{
+    typedef std::set<PVOID> BaseAddrMgr;
+public:
+    void* Alloc(SIZE_T _size)
+    {
+        void* p = VirtualAlloc(NULL, _size, MEM_COMMIT, PAGE_READWRITE);
+        if (p)
+        {
+            LockGuard<LockCrit> _g(m_lock);
+            m_BaseAddrMgr.insert(p);
+        }
+        return p;
+    }
+    void release(void* p)
+    {
+        MEMORY_BASIC_INFORMATION  mbinfo;
+        if(VirtualQuery(p, &mbinfo, sizeof(mbinfo))==0)
+            return;
+
+        p = mbinfo.AllocationBase;
+
+        {
+            LockGuard<LockCrit> _g(m_lock);
+            if (m_BaseAddrMgr.find(p)!=m_BaseAddrMgr.end())
+            {
+                m_BaseAddrMgr.erase(mbinfo.AllocationBase);
+            }
+            else
+                p = NULL;
+        }
+
+        p?VirtualFree(mbinfo.AllocationBase, 0, MEM_RELEASE):0;
+    }
+private:
+    BaseAddrMgr m_BaseAddrMgr;
+    LockCrit m_lock;
+};
+//namespace PerfMonitor
+//{
+//    template<typename IDType>
+//    class PerformenceMgr
+//    {
+//        class PerfCounter
+//        {
+//        public:
+//            PerfCounter()
+//                :m_TickSum(0)
+//                ,m_EnterSum(0)
+//                ,m_MaxTick(0)
+//                ,m_MinTick(0)
+//                ,m_ModeSwitch(0)
+//                ,m_ExpSwitch(0)
+//            {}
+//        public:
+//            UINT64 m_TickSum;       ///<总耗时记录
+//            UINT64 m_EnterSum;      ///<进入次数
+//            UINT64 m_MaxTick;       ///<最大执行耗时
+//            UINT64 m_MinTick;       ///<最小执行耗时
+//
+//            UINT64 m_ModeSwitch;    ///<内核切换
+//            UINT64 m_ExpSwitch;     ///<异常退出
+//        };
+//    };
+//    template<typename IDType>
+//    class PerfRecord
+//    {
+//    public:
+//        PerfRecord(IDType const& id):m_id(id){}
+//        ~PerfRecord()
+//        {
+//            INSTANCE_SINGLETON_S(PerformenceMgr<IDType>).Record(m_id,uncaught_exception(),);
+//        }
+//    private:
+//        IDType  m_id;
+//    };
+//
+//}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-
-    ExportCurTraceBack();
-    //try
-    //{
-    //    int* a = NULL;
-    //    *a = 3;
-    //}
-    //catch (...)
-    //{
-    //    std::cout << "CMemoryException" << std::endl;
-    //    try
-    //    {
-    //        throw 1;
-    //    }
-    //    catch (...)
-    //    {
-    //        std::cout << "CMemoryException 2" << std::endl;
-    //    }
-    //}
-    //Point a(0,0);
-    //Point b(9,5);
-    //vector<Point> path;
-    //Arithmetic::BresenhamLine(a, b, path);
-    //for (unsigned int i=0;i<path.size();++i)
-    //{
-    //    std::cout << "(" << path[i].x << "," << path[i].y << ")" <<std::endl;
-    //}
-
-    //HANDLE t1 = CreateThread(NULL, 0, MyThread, 0, 0, NULL);
-    //HANDLE t2 = CreateThread(NULL, 0, MyThread2, 0, 0, NULL);
-
-    //Sleep(5000);
-    //SuspendThread(t1);
-    //SuspendThread(t2);
-    //cout<< countA << endl
-    //    << countB << endl
-    //    << countB+countA << endl;
-
-    //do 
-    //{
+    
+//{
     //    if (!gPipeAnonymous.IsOk())
     //    {
     //        std::cout << "CreatePipe Failed!" << GetLastError() << std::endl;
@@ -114,7 +157,6 @@ int _tmain(int argc, _TCHAR* argv[])
     //        WriteFile(h_write, p.buff(), p.size(), &num, NULL);
     //    }
     //} while (0);
-    BenchMark::BM_Text();
 
     system("pause");
     return 0;

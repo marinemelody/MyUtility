@@ -7,10 +7,6 @@ namespace TextManipulate
 
     class StrDef
     {
-        enum
-        {
-            _MSG_BUFF_SIZE = 256,
-        };
     public:
         StrDef()
         {
@@ -18,24 +14,25 @@ namespace TextManipulate
             setlocale(LC_ALL, "");
     #endif
         }
-        //Windows错误文字输出
-        static TCHAR const* GetLastErrorStr()
-        {//todo tls
-            //_THREAD int a = 0;
-            //cout << a++ << endl;
-            static TCHAR m_msg[_MSG_BUFF_SIZE];
-            DWORD err = GetLastError();
-            FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, m_msg, _MSG_BUFF_SIZE, NULL);
-            return m_msg;
-        }
-        //Windows错误文字输出
-        static TCHAR const* GetSystemErrorStr(DWORD errcode)
-        {
-            static TCHAR m_msg[_MSG_BUFF_SIZE];
-            FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errcode, 0, m_msg, _MSG_BUFF_SIZE, NULL);
-            return m_msg;
-        }
     };
+#define _MSG_BUFF_SIZE  256
+    //Windows错误文字输出
+    static TCHAR const* GetLastErrorStr()
+    {//todo tls
+        //_THREAD int a = 0;
+        //cout << a++ << endl;
+        static TCHAR m_msg[_MSG_BUFF_SIZE];
+        DWORD err = GetLastError();
+        FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, m_msg, _MSG_BUFF_SIZE, NULL);
+        return m_msg;
+    }
+    //Windows错误文字输出
+    static TCHAR const* GetSystemErrorStr(DWORD errcode)
+    {
+        static TCHAR m_msg[_MSG_BUFF_SIZE];
+        FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errcode, 0, m_msg, _MSG_BUFF_SIZE, NULL);
+        return m_msg;
+    }
 /************************************************************************/
 /*             International                                            */
 /************************************************************************/

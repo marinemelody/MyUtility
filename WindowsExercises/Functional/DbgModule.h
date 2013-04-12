@@ -1,7 +1,8 @@
 #pragma once
 
+
+//if use UNICODE need dbghelp ver>6.3
 #ifdef UNICODE
-//need dbghelp ver>6.3
 #define DBGHELP_TRANSLATE_TCHAR
 #endif
 
@@ -9,6 +10,8 @@
 #include <map>
 #include <time.h>
 #include <Dbghelp.h>
+
+#include "Lock.h"
 
 #ifdef _WIN64
 #define FMT_ADDR "0x%016X"
@@ -39,14 +42,13 @@ public:
     DbgModule(void);
     ~DbgModule(void);
     //输出调用帧
-    int ExportTraceBack(DWORD64 eip, DWORD64 ebp, UINT32 MAX_TRACE_STACK=10);
+    int ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 MAX_TRACE_STACK=10);
 private:
     ModuleMgr   m_modules;
     HANDLE      m_hProcess;
+    LockCrit    m_lock;
 };
 #define gDbgModue INSTANCE_SINGLETON_S(DbgModule)
-//输出当前调用
-#define ExportCurTraceBack()  gDbgModue.ExportTraceBack(GetCurIPReg(),GetCurFrame())
 
 //结构化异常输出
 class SEHException
@@ -91,17 +93,20 @@ typedef DWORD_PTR TYPE_PTR;//指令类型
 TYPE_PTR GetCurIPReg();
 #pragma auto_inline(off)
 
-TYPE_PTR __forceinline GetCurFrame()
-{
-    TYPE_PTR _ebp;
-    __asm
-    {
-        mov [_ebp], ebp    // Put the return address into the variable we'll return
-    }
+//输出当前调用
+#define ExportCurTraceBack()                            \
+    TYPE_PTR _ebp,_esp;                                 \
+    __asm                                               \
+     /**/                                               \
+    {                                                   \
+        __asm mov [_ebp], ebp                           \
+        __asm mov [_esp], esp                           \
+    }                                                   \
+    gDbgModue.ExportTraceBack(GetCurIPReg(),_ebp,_esp);
 
-    return _ebp;
-}
 #endif//defined(_M_IX86)
+
+
 
 #if defined(_WIN32)
 //获取当前块分配大小

@@ -105,7 +105,7 @@ DbgModule::DbgModule(void)
     EnumerateLoadedModules64(m_hProcess, MyEnumerateLoadedModulesProc64, &m_modules);
     //初始化符号信息
     SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-    if (!::SymInitialize(m_hProcess,NULL, TRUE))
+    if (!SymInitialize(m_hProcess,NULL, TRUE))
     {
         std::cout << "符号信息不存在" << std::endl;
     }
@@ -115,28 +115,31 @@ DbgModule::~DbgModule(void)
 {
 }
 
-int DbgModule::ExportTraceBack(DWORD64 eip, DWORD64 ebp, UINT32 MAX_TRACE_STACK/*=10*/)
+int DbgModule::ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 MAX_TRACE_STACK/*=10*/)
 {
+    //dbgHelp.dll不支持多线程
+    LockGuard<LockCrit> __g(m_lock);
     //初始化帧信息
     STACKFRAME64 _sf;
     memset(&_sf, 0, sizeof(_sf));
     _sf.AddrPC.Mode = AddrModeFlat;
-    _sf.AddrPC.Offset = eip;
+    _sf.AddrPC.Offset = _eip;
     _sf.AddrFrame.Mode = AddrModeFlat;
-    _sf.AddrFrame.Offset = ebp;
+    _sf.AddrFrame.Offset = _ebp;
+    _sf.AddrStack.Mode = AddrModeFlat;
+    _sf.AddrStack.Offset = _esp;
+
+    CONTEXT _ct;
     //遍历调用栈
     DWORD64 tbs[15]= {0};
     int maxtrace = 15;
     int curtrace = 0;
     while(curtrace < maxtrace)
     {
-        ++curtrace;
-        if (!StackWalk64(IMAGE_FILE_MACHINE_I386, m_hProcess, GetCurrentThread(), &_sf, NULL, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
-        {
-            --curtrace;
+        if (!StackWalk64(IMAGE_FILE_MACHINE_I386, m_hProcess, GetCurrentThread(), &_sf, &_ct, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL))
             break;
-        }
-        tbs[curtrace-1] = _sf.AddrPC.Offset;
+        tbs[curtrace] = _sf.AddrPC.Offset;
+        ++curtrace;
     }
     
     //初始化接收参数
@@ -172,6 +175,7 @@ int DbgModule::ExportTraceBack(DWORD64 eip, DWORD64 ebp, UINT32 MAX_TRACE_STACK/
         }
 
     }
+    SetLastError(0);
     return 0;
 }
 

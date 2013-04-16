@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mt_gamesvr", "mt_gamesvr.vcproj", "{8E5940AD-5011-4B36-A0BC-1280F391DECF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mt_pclient", "..\mt_pclient\mt_pclient.vcproj", "{9687E875-A216-4B77-959C-985709393BBC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8E5940AD-5011-4B36-A0BC-1280F391DECF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8E5940AD-5011-4B36-A0BC-1280F391DECF}.Debug|Win32.Build.0 = Debug|Win32
+		{8E5940AD-5011-4B36-A0BC-1280F391DECF}.Release|Win32.ActiveCfg = Release|Win32
+		{8E5940AD-5011-4B36-A0BC-1280F391DECF}.Release|Win32.Build.0 = Release|Win32
+		{9687E875-A216-4B77-959C-985709393BBC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9687E875-A216-4B77-959C-985709393BBC}.Debug|Win32.Build.0 = Debug|Win32
+		{9687E875-A216-4B77-959C-985709393BBC}.Release|Win32.ActiveCfg = Release|Win32
+		{9687E875-A216-4B77-959C-985709393BBC}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

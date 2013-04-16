@@ -1,0 +1,29 @@
+##实力等级表						
+##[C]团队实力等级	[C]积分	[C]图标1	[C]图标2	[C]图标3	[C]图标4	[C]图标5
+##index(0)						
+int	int	string	string	string	string	string
+0	4	star_1.png				
+1	8	star_1.png	star_1.png			
+2	12	star_1.png	star_1.png	star_1.png		
+3	16	star_1.png	star_1.png	star_1.png	star_1.png	
+4	20	star_1.png	star_1.png	star_1.png	star_1.png	star_1.png
+5	28	star_2.png				
+6	36	star_2.png	star_2.png			
+7	44	star_2.png	star_2.png	star_2.png		
+8	52	star_2.png	star_2.png	star_2.png	star_2.png	
+9	60	star_2.png	star_2.png	star_2.png	star_2.png	star_2.png
+10	80	star_3.png				
+11	100	star_3.png	star_3.png			
+12	120	star_3.png	star_3.png	star_3.png		
+13	140	star_3.png	star_3.png	star_3.png	star_3.png	
+14	160	star_3.png	star_3.png	star_3.png	star_3.png	star_3.png
+15	178	star_4.png				
+16	196	star_4.png	star_4.png			
+17	214	star_4.png	star_4.png	star_4.png		
+18	232	star_4.png	star_4.png	star_4.png	star_4.png	
+19	250	star_4.png	star_4.png	star_4.png	star_4.png	star_4.png
+20	260	star_5.png				
+21	270	star_5.png	star_5.png			
+22	280	star_5.png	star_5.png	star_5.png		
+23	290	star_5.png	star_5.png	star_5.png	star_5.png	
+24	300	star_5.png	star_5.png	star_5.png	star_5.png	star_5.png

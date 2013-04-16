@@ -1,0 +1,6 @@
+##副本buff数据表						
+##BUFF编号	BUFF类型	BUFF系数	副本编号	循环模式	开启时间	开放时间
+##index(0)						
+int	int	int	string	int	string	int
+1	1	150	0|2	0	1|12|00	86400
+2	4	50	1	1	15|00|00	604800

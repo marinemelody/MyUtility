@@ -1,0 +1,9 @@
+##套装数据表									
+##[SC]套装编号	[C]套装名称	[SC]部件1编号	[SC]部件2编号	[SC]部件3编号	[SC]部件4编号	[SC]部件5编号	[C]套装图标	[C]获得来源	[C]适用卡牌
+##index(0)									
+int	string	int	int	int	int	int	string	string	string
+0	稀有保卫者	0	1	2	3	4	icon_equipment1_1_2.png	哀嚎～银牙、黑石(大奶同需、锁惢深大帝)	2★英雄进阶3★
+1	精良征服者	5	6	7	8	9	icon_equipment1_1_2.png	沼泽～陵墓	3★英雄进阶4★
+2	稀有武器	10	11	12	13	14	icon_equipment1_1_2.png	精英副本3★BOSS掉落	3★普通英雄升级精英版
+3	精良书籍	15	16	17	18	19	icon_equipment1_1_2.png	精英副本4★BOSS掉落	4★普通英雄升级精英版
+4	史诗首饰	20	21	22	23	24	icon_equipment1_1_2.png	精英副本5★BOSS掉落	5★普通英雄升级精英版

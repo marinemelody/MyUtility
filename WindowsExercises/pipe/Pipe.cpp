@@ -173,6 +173,35 @@ void FuncB()
     INSTANCE_SINGLETON_S(AllocVirtual).release(p);
 }
 
+class CA
+{
+
+};
+class CB
+{
+
+};
+class RefMgr
+{
+    template<typename TL, typename TR>
+    void AddRef(TL& l, TR r)
+    {
+
+    }
+    template<typename TL, typename TR>
+    TL& GetOpp()
+    {
+
+    }
+};
+template<typename TYPE>
+class RefNode
+{
+    RefNode(TYPE& obj):_obj(obj){}
+    ~RefNode(){}
+private:
+    TYPE& _obj;
+};
 
 int _tmain(int argc, _TCHAR* argv[])
 {

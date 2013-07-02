@@ -173,39 +173,42 @@ void FuncB()
     INSTANCE_SINGLETON_S(AllocVirtual).release(p);
 }
 
-class CA
+class NoneCopyable
 {
-
+protected:
+    NoneCopyable() {}
+    ~NoneCopyable() {}
+private: // emphasize the following members are private
+    NoneCopyable( const NoneCopyable& );
+    const NoneCopyable& operator=( const NoneCopyable& );
 };
-class CB
+class Serv
 {
-
+protected:
+    void Excute() = 0;
 };
-class RefMgr
+class FlowSend : public Serv
 {
-    template<typename TL, typename TR>
-    void AddRef(TL& l, TR r)
-    {
-
-    }
-    template<typename TL, typename TR>
-    TL& GetOpp()
-    {
-
-    }
+public:
+    void Send() = 0;
 };
-template<typename TYPE>
-class RefNode
+class FlowRecv : public Serv
 {
-    RefNode(TYPE& obj):_obj(obj){}
-    ~RefNode(){}
+public:
+    void Recv() = 0;
+};
+class TcpFlow
+{
+public:
+    explicit TcpFlow();
 private:
-    TYPE& _obj;
+    FlowSend _sendsrv;
+    FlowRecv _recvsrv;
 };
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-   
+
 //     FuncA();
 //     for (int i=0;i<1000;++i)
 //         FuncB();
@@ -236,7 +239,6 @@ int _tmain(int argc, _TCHAR* argv[])
     //    }
     //} while (0);
 
-    SwapMouseButton(FALSE);
     system("pause");
     return 0;
 }

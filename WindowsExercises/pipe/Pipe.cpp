@@ -165,6 +165,7 @@ void FuncA()
 {
     PERF_RECODE_FUNC;
     cout << "sikdkfkkkdjjlkd" << endl;
+    Sleep(100);
 }
 void FuncB()
 {
@@ -182,33 +183,96 @@ private: // emphasize the following members are private
     NoneCopyable( const NoneCopyable& );
     const NoneCopyable& operator=( const NoneCopyable& );
 };
-class Serv
-{
-protected:
-    void Excute() = 0;
-};
-class FlowSend : public Serv
+// class Serv
+// {
+// protected:
+//     void Excute() = 0;
+// };
+// class FlowSend : public Serv
+// {
+// public:
+//     void Send() = 0;
+// };
+// class FlowRecv : public Serv
+// {
+// public:
+//     void Recv() = 0;
+// };
+// class TcpFlow
+// {
+// public:
+//     explicit TcpFlow();
+// private:
+//     FlowSend _sendsrv;
+//     FlowRecv _recvsrv;
+// };
+//typedef void (*FUNC_TYPE)();
+
+template<typename Func>
+class FunctionNoArg
 {
 public:
-    void Send() = 0;
-};
-class FlowRecv : public Serv
-{
-public:
-    void Recv() = 0;
-};
-class TcpFlow
-{
-public:
-    explicit TcpFlow();
+    FunctionNoArg(Func* f){m_f = f;}
+
+    void operator()() {m_f();}
 private:
-    FlowSend _sendsrv;
-    FlowRecv _recvsrv;
+    Func* m_f;
+};
+class Thread : protected NoneCopyable
+{
+    typedef boost::function<void (void)> Functor;
+public:
+    Thread(Functor f):m_thread(NULL), m_run(0),m_f(f)
+    {
+        m_thread = CreateThread(NULL, 0, WorkFunc, this, CREATE_SUSPENDED, 0);
+    }
+
+    static DWORD WINAPI WorkFunc(LPVOID lpParameter)
+    {
+        Thread* pThread = (Thread*)lpParameter;
+        assert(pThread);
+
+        while(pThread->m_run)
+        {
+            pThread->m_f();
+        }
+
+        return 0;
+    }
+
+    bool start()
+    {
+        m_run = 1;
+        return ResumeThread(m_thread)!=-1 ;
+    }
+    void term() {m_run = 0;}
+
+private:
+    HANDLE m_thread;
+    volatile UINT m_run;
+    FunctionNoArg<void ()> m_f;
+    //boost::function<void ()> m_f;
+};
+
+template<int NUM>
+class BitSet
+{
+public:
+    BitSet(){memset(m_bits, 0, sizeof(m_bits));}
+
+    void Set(UINT index){assert(index<NUM);m_bits[index/8] |= 1<<(index%8); }
+    void Del(UINT index){assert(index<NUM);m_bits[index/8] &= ~(1<<(index%8)); }
+
+    char* buff() {return m_bits;}
+    int   size() {return (NUM+7)/8;}
+private:
+    char m_bits[(NUM+7)/8];
 };
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
+    Thread a(FuncA);
+    a.start();
 //     FuncA();
 //     for (int i=0;i<1000;++i)
 //         FuncB();

@@ -42,6 +42,7 @@ public:
     DbgModule(void);
     ~DbgModule(void);
     //输出调用帧
+    int ExportTraceBack(LPEXCEPTION_POINTERS pExp, UINT32 MAX_TRACE_STACK=10);
     int ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 MAX_TRACE_STACK=10);
 private:
     ModuleMgr   m_modules;
@@ -49,6 +50,8 @@ private:
     LockCrit    m_lock;
 };
 #define gDbgModue INSTANCE_SINGLETON_S(DbgModule)
+
+extern int SEH_FILTER(LPEXCEPTION_POINTERS);
 
 //结构化异常输出
 class SEHException
@@ -112,4 +115,7 @@ TYPE_PTR GetCurIPReg();
 //获取当前块分配大小
 int GetMemSize(void* p);
 #endif//defined(_WIN32)
+
+#define  SEH_TRY_BEGIN __try{
+#define  SEH_TRY_END }__except(SEH_FILTER(GetExceptionInformation())){}
 

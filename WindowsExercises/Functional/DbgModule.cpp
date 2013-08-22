@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "DbgModule.h"
+#include "Singleton.h"
 
 SEHTranslator _seh;
 
@@ -115,6 +116,11 @@ DbgModule::~DbgModule(void)
 {
 }
 
+int DbgModule::ExportTraceBack(LPEXCEPTION_POINTERS pExp, UINT32 MAX_TRACE_STACK/*=10*/)
+{
+    return ExportTraceBack(pExp->ContextRecord->Eip, pExp->ContextRecord->Ebp, pExp->ContextRecord->Esp, MAX_TRACE_STACK);
+}
+
 int DbgModule::ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 MAX_TRACE_STACK/*=10*/)
 {
     //dbgHelp.dll不支持多线程
@@ -164,7 +170,7 @@ int DbgModule::ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 
             DWORD64 _baseaddr = SymGetModuleBase64(m_hProcess, tbs[i]);
             if(m_modules.find(_baseaddr)!=m_modules.end())
             {
-                std::cout << m_modules[_baseaddr].ModuleName.c_str() << "!" << psi->Name << ":" << li.FileName << "(Line" << li.LineNumber << ")" << std::endl;
+                std::cout << m_modules[_baseaddr].ModuleName.c_str() << "!" << psi->Name << ":" << (li.FileName?li.FileName:"No FileName") << "(Line" << li.LineNumber << ")" << std::endl;
             }
         }
         else
@@ -177,6 +183,13 @@ int DbgModule::ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 
     }
     SetLastError(0);
     return 0;
+}
+
+int SEH_FILTER(LPEXCEPTION_POINTERS pExp)
+{
+    gDbgModue.ExportTraceBack(pExp);
+
+    return EXCEPTION_EXECUTE_HANDLER;
 }
 
 SEHException::SEHException(EXCEPTION_POINTERS* pExp)
@@ -215,7 +228,6 @@ void SEHException::GenerateExceptionInfo(EXCEPTION_POINTERS* pExp)
     }
     GenerateMiniDump(pExp);
 }
-
 
 #if defined(_M_IX86)
 TYPE_PTR GetCurIPReg()

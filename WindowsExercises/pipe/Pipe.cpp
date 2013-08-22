@@ -49,6 +49,7 @@ DEFINE_SERIAL(Test)
 #include "Functional/DbgModule.h"
 
 
+
 class AllocVirtual
 {
     typedef std::set<PVOID> BaseAddrMgr;
@@ -63,7 +64,7 @@ public:
         }
         return p;
     }
-    void release(void* p)
+    void free(void* p)
     {
         MEMORY_BASIC_INFORMATION  mbinfo;
         if(VirtualQuery(p, &mbinfo, sizeof(mbinfo))==0)
@@ -171,18 +172,9 @@ void FuncB()
 {
     PERF_RECODE_FUNC;
     void* p = INSTANCE_SINGLETON_S(AllocVirtual).Alloc(100);
-    INSTANCE_SINGLETON_S(AllocVirtual).release(p);
+    INSTANCE_SINGLETON_S(AllocVirtual).free(p);
 }
 
-class NoneCopyable
-{
-protected:
-    NoneCopyable() {}
-    ~NoneCopyable() {}
-private: // emphasize the following members are private
-    NoneCopyable( const NoneCopyable& );
-    const NoneCopyable& operator=( const NoneCopyable& );
-};
 // class Serv
 // {
 // protected:
@@ -208,71 +200,173 @@ private: // emphasize the following members are private
 // };
 //typedef void (*FUNC_TYPE)();
 
-template<typename Func>
-class FunctionNoArg
-{
-public:
-    FunctionNoArg(Func* f){m_f = f;}
+// template<typename Func>
+// class FunctionNoArg
+// {
+// public:
+//     FunctionNoArg(Func* f){m_f = f;}
+// 
+//     void operator()() {m_f();}
+// private:
+//     Func* m_f;
+// };
+// class Thread : protected NoneCopyable
+// {
+//     typedef boost::function<void (void)> Functor;
+// public:
+//     Thread(Functor f):m_thread(NULL), m_run(0),m_f(f)
+//     {
+//         m_thread = CreateThread(NULL, 0, WorkFunc, this, CREATE_SUSPENDED, 0);
+//     }
+// 
+//     static DWORD WINAPI WorkFunc(LPVOID lpParameter)
+//     {
+//         Thread* pThread = (Thread*)lpParameter;
+//         assert(pThread);
+// 
+//         while(pThread->m_run)
+//         {
+//             pThread->m_f();
+//         }
+// 
+//         return 0;
+//     }
+// 
+//     bool start()
+//     {
+//         m_run = 1;
+//         return ResumeThread(m_thread)!=-1 ;
+//     }
+//     void term() {m_run = 0;}
+// 
+// private:
+//     HANDLE m_thread;
+//     volatile UINT m_run;
+//     FunctionNoArg<void ()> m_f;
+//     //boost::function<void ()> m_f;
+// };
 
-    void operator()() {m_f();}
-private:
-    Func* m_f;
+
+
+void FuncAa()
+{
+    throw 1;
+
+}
+
+#include "Structure/Arrays.h"
+
+
+template<UINT32 GRANULARITY>
+class MemAlloc
+{
 };
-class Thread : protected NoneCopyable
+
+template<typename T>
+class ListPool
 {
-    typedef boost::function<void (void)> Functor;
-public:
-    Thread(Functor f):m_thread(NULL), m_run(0),m_f(f)
-    {
-        m_thread = CreateThread(NULL, 0, WorkFunc, this, CREATE_SUSPENDED, 0);
-    }
+    typedef T* ptr_type;
+    typedef T valuetype;
 
-    static DWORD WINAPI WorkFunc(LPVOID lpParameter)
+#define REVERSE_DATA 0xcd
+    struct PoolObj
     {
-        Thread* pThread = (Thread*)lpParameter;
-        assert(pThread);
-
-        while(pThread->m_run)
+        PoolObj* _last;
+        typename T _obj;
+#ifdef MEM_TEST
+        char reverse;
+#endif
+    };
+    class ObjHolder
+    {
+    public:
+        ObjHolder(T* _p)
         {
-            pThread->m_f();
+            m_obj = (PoolObj*)((char*)_p - sizeof(PoolObj*));
         }
-
-        return 0;
-    }
-
-    bool start()
+    public:
+        PoolObj* m_obj;
+    };
+    class MemHolder
     {
-        m_run = 1;
-        return ResumeThread(m_thread)!=-1 ;
+    public:
+        MemHolder():m_Header(0){}
+        PoolObj* Fetch(){return m_objs+(m_Header++);}
+
+        PoolObj     m_objs[1024];
+        UINT32      m_Header;
+    };
+public:
+
+    ListPool():m_tail(NULL),m_used(0),m_totle(0){}
+    ptr_type Acquire()
+    {
+        if (!m_tail)
+        {
+            m_tail = m_mems.Fetch();
+            AssertThrow(m_tail, throw 1);
+            m_tail->_last = NULL;
+            ++m_totle;
+#ifdef MEM_TEST
+            m_tail->reverse = REVERSE_DATA;
+#endif
+            return Acquire();
+        }
+        PoolObj* pRet = m_tail;
+        m_tail = m_tail->_last;
+        pRet->_last = NULL;
+        ++m_used;
+
+        
+        return new(&pRet->_obj) T();
     }
-    void term() {m_run = 0;}
+    void Release(ptr_type _obj)
+    {
+        ObjHolder h(_obj);
+#ifdef MEM_TEST
+        memset(_obj, 0, sizeof(T));
+        AssertThrow(h.m_obj->reverse != REVERSE_DATA, {h.m_obj->reverse=REVERSE_DATA;throw 1;})
+#endif
+        h.m_obj->_last = m_tail;
+        m_tail = h.m_obj;
+        --m_used;
+    }
 
 private:
-    HANDLE m_thread;
-    volatile UINT m_run;
-    FunctionNoArg<void ()> m_f;
-    //boost::function<void ()> m_f;
+    PoolObj* m_tail;
+    UINT32   m_used;
+    UINT32   m_totle;
+    MemHolder m_mems;
 };
 
-template<int NUM>
-class BitSet
+class PagePool
 {
 public:
-    BitSet(){memset(m_bits, 0, sizeof(m_bits));}
-
-    void Set(UINT index){assert(index<NUM);m_bits[index/8] |= 1<<(index%8); }
-    void Del(UINT index){assert(index<NUM);m_bits[index/8] &= ~(1<<(index%8)); }
-
-    char* buff() {return m_bits;}
-    int   size() {return (NUM+7)/8;}
 private:
-    char m_bits[(NUM+7)/8];
 };
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-    Thread a(FuncA);
-    a.start();
+    ListPool<INT>  a;
+    INT* b = a.Acquire();
+    a.Release(b);
+
+    //     SEH_TRY_BEGIN
+// 
+// 
+//         FuncAa();
+// 
+//     SEH_TRY_END
+
+//     try
+//     {
+//         FuncAa();
+//     }
+//     catch (TExp a)
+//     {
+//     }
+//     Thread a(FuncA);
+//     a.start();
 //     FuncA();
 //     for (int i=0;i<1000;++i)
 //         FuncB();

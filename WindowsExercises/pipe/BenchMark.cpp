@@ -25,4 +25,14 @@ void BenchMark::BM_Text()
     ConvertToNative(un_t, jp_2, 932);
 }
 
+#include "Arithmetic/Greater.h"
+void BenchMark::BM_Arithmetic_Greater()
+{
+    bool ss1 = Greater(1,2, 1,1);
+    bool ss2 = Smaller(1,2, 1,3);
+    bool ss3 = Equal(1,2, 1,1);
 
+    std::cout << (ss1?"aaaa":"bbbbb") << std::endl;
+    std::cout << (ss2?"aaaa":"bbbbb") << std::endl;
+    std::cout << (ss3?"aaaa":"bbbbb") << std::endl;
+}

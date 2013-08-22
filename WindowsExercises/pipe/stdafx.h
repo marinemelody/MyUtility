@@ -18,5 +18,6 @@
 #include "windows.h"
 
 #include "TypeDefine.h"
+#include "PreDefine.h"
 
 // TODO: reference additional headers your program requires here

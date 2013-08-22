@@ -185,6 +185,14 @@
 			<File
 				RelativePath=".\Pipe.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\stdafx.cpp"
@@ -257,6 +265,14 @@
 					RelativePath="..\Arithmetic\Arithmetic.h"
 					>
 				</File>
+				<File
+					RelativePath="..\Arithmetic\Greater.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Arithmetic\GreaterPre.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Functional"
@@ -323,6 +339,14 @@
 				</File>
 				<File
 					RelativePath=".\TypeDefine.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Structure"
+				>
+				<File
+					RelativePath="..\Structure\Arrays.h"
 					>
 				</File>
 			</Filter>

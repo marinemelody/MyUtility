@@ -5,5 +5,3 @@
 #else
 #define AssertThrow(expr,throwexpr) if (!(expr)) {throwexpr};
 #endif
-
-

@@ -36,3 +36,27 @@ void BenchMark::BM_Arithmetic_Greater()
     std::cout << (ss2?"aaaa":"bbbbb") << std::endl;
     std::cout << (ss3?"aaaa":"bbbbb") << std::endl;
 }
+
+#include "Functional/Serialize.h"
+void BenchMark::BM_Serialize()
+{
+    struct Test
+    {
+        int a,b,c;
+        DEFINE_COPY_SERIAL
+    };
+
+    string ss = "slkjdflk";
+    Serialization s;
+    Test a = {0,1,2};
+    s << a << ss;
+
+    Deserialize dsr(s.packet());
+    string c;
+    Test b;
+    dsr >> b >> c;
+
+    if (ss == c)
+        std::cout << "BM_Serialize OK!" << endl;
+}
+

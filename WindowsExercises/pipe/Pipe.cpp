@@ -27,25 +27,6 @@ DWORD WINAPI MyThread2( LPVOID lpParam )
 #include "BenchMark.h"
 
 
-//#define DEFINE_SERILIZE(param) \
-//Deserialize& operator>>(Deserialize& dsr, )\
-//{
-//    return dsr/* & param*/;\
-//}\
-
-struct Test
-{
-    int a,b,c;
-    //DEFINE_SERILIZE(a&b&c);
-};
-#define DEFINE_SERIAL(cls,...) \
-Deserialize& operator>>(Deserialize& dsr, cls ss)\
-{\
-    return dsr & ss.a&ss.b&ss.c;\
-}\
-
-DEFINE_SERIAL(Test)
-
 #include "Functional/DbgModule.h"
 
 
@@ -347,9 +328,10 @@ private:
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-    ListPool<INT>  a;
-    INT* b = a.Acquire();
-    a.Release(b);
+//     ListPool<INT>  a;
+//     INT* b = a.Acquire();
+//     a.Release(b);
+
 
     //     SEH_TRY_BEGIN
 // 

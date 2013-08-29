@@ -338,6 +338,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Traits.h"
+					>
+				</File>
+				<File
 					RelativePath=".\TypeDefine.h"
 					>
 				</File>

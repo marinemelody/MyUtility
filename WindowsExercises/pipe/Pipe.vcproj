@@ -62,11 +62,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Dbghelp.lib"
+				AdditionalDependencies="Dbghelp.lib cryptlib.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\python\lib"
+				AdditionalLibraryDirectories="..\..\python\lib;../../cryptopp/Win32/Output/Debug"
 				GenerateDebugInformation="true"
 				SubSystem="1"
+				LargeAddressAware="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -246,6 +247,10 @@
 				Name="Utility"
 				>
 				<File
+					RelativePath="..\Utility\EndianTranslate.h"
+					>
+				</File>
+				<File
 					RelativePath="..\Utility\TextManipulate.cpp"
 					>
 				</File>
@@ -271,6 +276,14 @@
 				</File>
 				<File
 					RelativePath="..\Arithmetic\GreaterPre.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Arithmetic\Hash.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\Arithmetic\Hash.h"
 					>
 				</File>
 			</Filter>
@@ -334,6 +347,10 @@
 				Name="_Define"
 				>
 				<File
+					RelativePath=".\MacroExpression.h"
+					>
+				</File>
+				<File
 					RelativePath=".\PreDefine.h"
 					>
 				</File>
@@ -353,6 +370,10 @@
 					RelativePath="..\Structure\Arrays.h"
 					>
 				</File>
+			</Filter>
+			<Filter
+				Name="Security"
+				>
 			</Filter>
 		</Filter>
 		<File

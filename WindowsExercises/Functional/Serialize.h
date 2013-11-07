@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MacroExpression.h"
 #include "Traits.h"
 
 //°ü´æ´¢

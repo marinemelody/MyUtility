@@ -21,3 +21,5 @@ typedef bool Boolean;
 
 typedef float   Float;
 typedef double  Double;
+
+typedef UINT32  size_t;

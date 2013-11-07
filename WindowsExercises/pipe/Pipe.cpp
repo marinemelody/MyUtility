@@ -13,6 +13,7 @@ using namespace std;
 #include "Arithmetic/Arithmetic.h"
 #include "Utility/TextManipulate.h"
 
+#include "Structure/Arrays.h"
 
 DWORD WINAPI MyThread( LPVOID lpParam )
 {
@@ -29,46 +30,22 @@ DWORD WINAPI MyThread2( LPVOID lpParam )
 
 #include "Functional/DbgModule.h"
 
-
-
-class AllocVirtual
+class SystemInfo
 {
-    typedef std::set<PVOID> BaseAddrMgr;
 public:
-    void* Alloc(SIZE_T _size)
+    SystemInfo(){Init();}
+
+    void Init()
     {
-        void* p = VirtualAlloc(NULL, _size, MEM_COMMIT, PAGE_READWRITE);
-        if (p)
-        {
-            LockGuard<LockCrit> _g(m_lock);
-            m_BaseAddrMgr.insert(p);
-        }
-        return p;
+        SYSTEM_INFO si;
+        GetSystemInfo(&si);
     }
-    void free(void* p)
-    {
-        MEMORY_BASIC_INFORMATION  mbinfo;
-        if(VirtualQuery(p, &mbinfo, sizeof(mbinfo))==0)
-            return;
 
-        p = mbinfo.AllocationBase;
-
-        {
-            LockGuard<LockCrit> _g(m_lock);
-            if (m_BaseAddrMgr.find(p)!=m_BaseAddrMgr.end())
-            {
-                m_BaseAddrMgr.erase(mbinfo.AllocationBase);
-            }
-            else
-                p = NULL;
-        }
-
-        p?VirtualFree(mbinfo.AllocationBase, 0, MEM_RELEASE):0;
-    }
 private:
-    BaseAddrMgr m_BaseAddrMgr;
-    LockCrit m_lock;
+    SYSTEM_INFO m_SystemInfo;
 };
+
+
 namespace PerfMonitor
 {
     template<typename IDType>
@@ -110,10 +87,10 @@ namespace PerfMonitor
             {
                 out << itr->first << std::endl
                     << "Enter num:" << itr->second.m_EnterSum << std::endl
-                    << "Enter num:" << itr->second.m_TickSum << std::endl
-                    << "Enter num:" << itr->second.m_MaxTick << std::endl
-                    << "Enter num:" << itr->second.m_MinTick << std::endl
-                    << "Enter num:" << itr->second.m_MinTick << std::endl;
+                    << "Tick  num:" << itr->second.m_TickSum << std::endl
+                    << "MaxTick  :" << itr->second.m_MaxTick << std::endl
+                    << "MinTick  :" << itr->second.m_MinTick << std::endl
+                    << "Exp   num:" << itr->second.m_ExpSwitch << std::endl;
             }
         }
     private:
@@ -140,6 +117,11 @@ namespace PerfMonitor
         return out;
     }
 }
+#define PERF_RECODE_STRING_RESULT(str) \
+    INSTANCE_SINGLETON_S(PerfMonitor::PerformenceMgr<std::string>).write(str);
+#define PERF_RECODE_STRING(str) \
+    PerfMonitor::PerfRecord<std::string> _pm_(str);
+
 #define PERF_RECODE_FUNC    \
     PerfMonitor::PerfRecord<std::string> _pm_(__FUNCTION__);
 
@@ -152,8 +134,7 @@ void FuncA()
 void FuncB()
 {
     PERF_RECODE_FUNC;
-    void* p = INSTANCE_SINGLETON_S(AllocVirtual).Alloc(100);
-    INSTANCE_SINGLETON_S(AllocVirtual).free(p);
+//     void* p = INSTANCE_SINGLETON_S(AllocVirtual<>).Alloc(100);
 }
 
 // class Serv
@@ -229,84 +210,161 @@ void FuncB()
 
 
 
-void FuncAa()
+
+#define SYS_PAGE_SIZE           0x1000
+#define SYS_MEM_GRANULARITY     0x10000
+
+template<size_t SIZE_ALLOC, size_t MEM_NUMS = 0x400, size_t GRANULARITY=16*SYS_MEM_GRANULARITY-SYS_PAGE_SIZE>
+class AllocVirtual
 {
-    throw 1;
+    struct PageMem
+    {
+        LPVOID m_base;
+        LPVOID m_cur;
 
-}
+        PageMem(LPVOID addr):m_base(addr), m_cur(addr){}
+        PageMem():m_base(0), m_cur(0){}
 
-#include "Structure/Arrays.h"
+        LPVOID Alloc()
+        {
+            if ((UINT64)m_cur + SIZE_ALLOC > (UINT64)m_base + GRANULARITY)
+                return NULL;
+            LPVOID ret = m_cur;
+            m_cur = (LPVOID)((UINT64)m_cur + SIZE_ALLOC);
+            return ret;
+        }
+        bool Check(LPVOID addr) const
+        {
+            if (addr < m_base || addr >= m_cur)
+                return false;
+            if (((UINT64)addr-(UINT64)m_base)%SIZE_ALLOC != 0)
+                return false;
+            return true;
+        }
+    };
+public:
+    AllocVirtual():m_BaseAddrs()
+    {}
+    LPVOID Alloc()
+    {
+        PageMem* pPM = m_BaseAddrs.end();
+        if (!pPM)
+        {
+            AllocPage();
+            return Alloc();
+        }
 
-
-template<UINT32 GRANULARITY>
-class MemAlloc
-{
+        LPVOID ret = pPM->Alloc();
+        if (!ret)
+        {
+            AllocPage();
+            return Alloc();
+        }
+        return ret;
+    }
+    void AllocPage()
+    {
+        AssertThrow(!m_BaseAddrs.full(), throw 1);
+        LPVOID p = VirtualAlloc(NULL, GRANULARITY, MEM_COMMIT, PAGE_READWRITE);
+        AssertThrow(p, throw 1);
+        m_BaseAddrs.insert(p);
+    }
+    bool Check(LPVOID addr)
+    {
+        FOR_0_NUM(i, m_BaseAddrs.size())
+        {
+            if(m_BaseAddrs[i].Check(addr))
+                return true;
+        }
+        return false;
+    }
+private:
+    CompactArray<PageMem, MEM_NUMS> m_BaseAddrs;
 };
 
+#pragma pack(push,4)
 template<typename T>
+struct PoolObj
+{
+    PoolObj* _last;
+    T        _obj;
+#ifdef MEM_TEST
+    UINT32   reverse;
+#endif
+};
+
+template<typename T, typename MemHolder = AllocVirtual<sizeof(PoolObj<T>)> >
+class ListPool;
+
+template<typename T, typename MemHolder>
 class ListPool
 {
+    enum
+    {
+        REVERSE_DATA = 0xcdcdcdcd,
+    };
+
+public:
     typedef T* ptr_type;
     typedef T valuetype;
+    typedef PoolObj<T> PoolObjType;
 
-#define REVERSE_DATA 0xcd
-    struct PoolObj
-    {
-        PoolObj* _last;
-        typename T _obj;
-#ifdef MEM_TEST
-        char reverse;
-#endif
-    };
     class ObjHolder
     {
     public:
         ObjHolder(T* _p)
         {
-            m_obj = (PoolObj*)((char*)_p - sizeof(PoolObj*));
+            m_obj = (PoolObjType*)((char*)_p - sizeof(PoolObjType*));
         }
     public:
-        PoolObj* m_obj;
-    };
-    class MemHolder
-    {
-    public:
-        MemHolder():m_Header(0){}
-        PoolObj* Fetch(){return m_objs+(m_Header++);}
-
-        PoolObj     m_objs[1024];
-        UINT32      m_Header;
+        PoolObjType* m_obj;
     };
 public:
 
     ListPool():m_tail(NULL),m_used(0),m_totle(0){}
     ptr_type Acquire()
     {
-        if (!m_tail)
-        {
-            m_tail = m_mems.Fetch();
-            AssertThrow(m_tail, throw 1);
-            m_tail->_last = NULL;
-            ++m_totle;
-#ifdef MEM_TEST
-            m_tail->reverse = REVERSE_DATA;
-#endif
-            return Acquire();
-        }
-        PoolObj* pRet = m_tail;
-        m_tail = m_tail->_last;
-        pRet->_last = NULL;
-        ++m_used;
-
-        
-        return new(&pRet->_obj) T();
+        ptr_type objptr = AcquireNC();
+        return new(objptr) T();
     }
     void Release(ptr_type _obj)
     {
+        _obj->~T();
+        ReleaseND(_obj);
+    }
+    //No Construct
+    ptr_type AcquireNC()
+    {
+        if (!m_tail)
+        {
+            m_tail = (PoolObjType*)m_mems.Alloc();
+            AssertThrow(m_tail, throw 1);
+            m_tail->_last = NULL;
+#ifdef MEM_TEST
+            m_tail->reverse = REVERSE_DATA;
+#endif
+            ++m_totle;
+            return AcquireNC();
+        }
+        PoolObjType* pRet = m_tail;
+        m_tail = m_tail->_last;
+        pRet->_last = NULL;
+#ifdef MEM_TEST
+        memset(&pRet->_obj, 0, sizeof(pRet->_obj));
+        AssertThrow(pRet->reverse == REVERSE_DATA, {pRet->reverse=REVERSE_DATA;throw 1;});
+#endif
+        ++m_used;
+        return &pRet->_obj;
+    }
+    //no destruct
+    void ReleaseND(ptr_type _obj)
+    {
         ObjHolder h(_obj);
 #ifdef MEM_TEST
+        AssertThrow(m_mems.Check(h.m_obj), throw 1);
         memset(_obj, 0, sizeof(T));
-        AssertThrow(h.m_obj->reverse != REVERSE_DATA, {h.m_obj->reverse=REVERSE_DATA;throw 1;})
+        AssertThrow(h.m_obj->_last == NULL, {h.m_obj->_last=NULL;throw 1;});
+        AssertThrow(h.m_obj->reverse == REVERSE_DATA, {h.m_obj->reverse=REVERSE_DATA;throw 1;});
 #endif
         h.m_obj->_last = m_tail;
         m_tail = h.m_obj;
@@ -314,23 +372,118 @@ public:
     }
 
 private:
-    PoolObj* m_tail;
-    UINT32   m_used;
-    UINT32   m_totle;
-    MemHolder m_mems;
+    PoolObjType*    m_tail;
+    UINT32      m_used;
+    UINT32      m_totle;
+    MemHolder   m_mems;
+};
+#pragma pack(pop)
+
+struct TestStruct
+{
+    TestStruct(){}
+    char objs[0x2000];
 };
 
-class PagePool
-{
-public:
-private:
-};
+
+// void* operator new(size_t _size, string ss)
+// {
+//     std::cout << "GLOBE" << _size << std::endl;
+//     return ::operator new(_size);
+// }
+// class A
+// {
+//     char a[10];
+// public:
+//     void operator delete(void* p, size_t _size)
+//     {
+//         std::cout << "~A" << _size << std::endl;
+//         return ::operator delete(p);
+//     }
+//         void* operator new(size_t _size)
+//         {
+//             std::cout << "A" << _size << std::endl;
+//             return ::operator new(_size);
+//         }
+// };
+// 
+// class B: public A
+// {
+//     char b[12];
+// 
+// };
+// class C: public A
+// {
+//     char c[18];
+// 
+// };
+// 
+// class E: public B
+// {
+//     char e[128];
+// 
+// };
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+
+//     ListPool<TestStruct> lp;
+//     TestStruct* *pointers = new TestStruct*[10000];
+//     {
+//         PERF_RECODE_STRING("POOLA");
+//         FOR_0_NUM(i,10000)
+//         {
+//             TestStruct* p = lp.Acquire();
+//             pointers[i] = p;
+//         }
+//     }
+//     {
+//         PERF_RECODE_STRING("POOLD");
+//         FOR_0_NUM(i,10000)
+//         {
+//             lp.Release(pointers[i]);
+//         }
+//     }
+//     {
+//         PERF_RECODE_STRING("NEW");
+//         FOR_0_NUM(i,10000)
+//         {
+//             TestStruct* p = new TestStruct;
+//             pointers[i] = p;
+//             //   delete p;
+//             //             std::cout << std::hex << p << std::endl;
+//         }
+//     }
+//     {
+//         PERF_RECODE_STRING("DELETE");
+//         FOR_0_NUM(i,10000)
+//         {
+//             delete pointers[i];
+//         }
+//     }
+// 
+//     PERF_RECODE_STRING_RESULT(std::cout);
+
 //     ListPool<INT>  a;
 //     INT* b = a.Acquire();
-//     a.Release(b);
+    //     a.Release(b);
+    //LPVOID p = VirtualAlloc(NULL, SYS_PAGE_SIZE*16, MEM_COMMIT, PAGE_READWRITE);
+    //size_t xx;
+
+    //MEMORY_BASIC_INFORMATION  mbinfo;
+    //if(xx = VirtualQuery((LPVOID)((INT)p+0x1000), &mbinfo, sizeof(mbinfo))==0)
+    //    return 0;
+    //if(xx = VirtualQuery((LPVOID)((INT)p+0x10000), &mbinfo, sizeof(mbinfo))==0)
+    //    return 0;
+
+    //if(xx = VirtualQuery((LPVOID)((INT)p+0x20000), &mbinfo, sizeof(mbinfo))==0)
+    //    return 0;
+    //if(xx = VirtualQuery((LPVOID)((INT)p+0x30000), &mbinfo, sizeof(mbinfo))==0)
+    //    return 0;
+    //std::cout << p << std::endl;
+
+    //std::vector<int> ss;
+    //ss.begin();
 
 
     //     SEH_TRY_BEGIN
@@ -379,6 +532,7 @@ int _tmain(int argc, _TCHAR* argv[])
     //    }
     //} while (0);
 
+    //BenchMark::BM_Serialize();
     system("pause");
     return 0;
 }

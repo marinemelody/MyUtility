@@ -124,7 +124,7 @@ namespace Traits
         typedef _Trait_Scalar _Tag;
     };
 
-    //提取指针的引用类型
+    //提取指针的非const引用类型
     template<typename T>
     struct TraitPoint
     {
@@ -132,6 +132,11 @@ namespace Traits
     };
     template<typename T>
     struct TraitPoint<T*>
+    {
+        typedef typename TraitPoint<T>::Value_type Value_type;
+    };
+    template<typename T>
+    struct TraitPoint<T const>
     {
         typedef typename TraitPoint<T>::Value_type Value_type;
     };

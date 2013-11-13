@@ -7,7 +7,7 @@ class LockGuard
 {
 public: 
     typedef LOCK LOCKTYPE;
-    LockGuard(LOCK& l):_lock(l)
+    LockGuard(LOCKTYPE& l):_lock(l)
     {
         _lock.acquire();
     }
@@ -16,9 +16,17 @@ public:
         _lock.release();
     }
 private:
-    LOCK& _lock;
+    LOCKTYPE& _lock;
 };
 
+template<>
+class LockGuard<LockNull>
+{
+public: 
+    typedef LockNull LOCKTYPE;
+    LockGuard(LOCKTYPE& l)
+    {}
+};
 #define  G_LOCK(t,a) LockGuard<t> _g_##a(a);
 
 

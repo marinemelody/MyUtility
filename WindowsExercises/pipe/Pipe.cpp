@@ -46,97 +46,6 @@ private:
 };
 
 
-namespace PerfMonitor
-{
-    template<typename IDType>
-    class PerformenceMgr
-    {
-        class PerfCounter
-        {
-        public:
-            PerfCounter()
-                :m_TickSum(0)
-                ,m_EnterSum(0)
-                ,m_MaxTick(0)
-                ,m_MinTick(0)
-                ,m_ModeSwitch(0)
-                ,m_ExpSwitch(0)
-            {}
-        public:
-            UINT64 m_TickSum;       ///<总耗时记录
-            UINT64 m_EnterSum;      ///<进入次数
-            UINT64 m_MaxTick;       ///<最大执行耗时
-            UINT64 m_MinTick;       ///<最小执行耗时
-
-            UINT64 m_ModeSwitch;    ///<内核切换
-            UINT64 m_ExpSwitch;     ///<异常退出
-        };
-
-    public:
-        void Record(IDType const& id, UINT64 ticks, bool isExp)
-        {
-            m_records[id].m_TickSum     += ticks;
-            m_records[id].m_EnterSum    += 1;
-            m_records[id].m_MaxTick = max(m_records[id].m_MaxTick, ticks);
-            m_records[id].m_MinTick = min(m_records[id].m_MinTick, ticks);
-            isExp?++m_records[id].m_ExpSwitch:0;
-        }
-        void write(ostream& out) const
-        {
-            for (PerfRecord::const_iterator itr=m_records.begin();itr!=m_records.end();++itr)
-            {
-                out << itr->first << std::endl
-                    << "Enter num:" << itr->second.m_EnterSum << std::endl
-                    << "Tick  num:" << itr->second.m_TickSum << std::endl
-                    << "MaxTick  :" << itr->second.m_MaxTick << std::endl
-                    << "MinTick  :" << itr->second.m_MinTick << std::endl
-                    << "Exp   num:" << itr->second.m_ExpSwitch << std::endl;
-            }
-        }
-    private:
-        typedef std::map<IDType, PerfCounter> PerfRecord;
-        PerfRecord m_records;
-    };
-    template<typename IDType>
-    class PerfRecord
-    {
-    public:
-        PerfRecord(IDType const& id):m_id(id){m_startTick=GetTickCount();}
-        ~PerfRecord()
-        {
-            INSTANCE_SINGLETON_S(PerformenceMgr<IDType>).Record(m_id,GetTickCount()-m_startTick,uncaught_exception());
-        }
-    private:
-        IDType  m_id;
-        UINT64  m_startTick;
-    };
-
-    ostream& operator <<(ostream& out, PerformenceMgr<std::string> const& pm)
-    {
-        pm.write(out);
-        return out;
-    }
-}
-#define PERF_RECODE_STRING_RESULT(str) \
-    INSTANCE_SINGLETON_S(PerfMonitor::PerformenceMgr<std::string>).write(str);
-#define PERF_RECODE_STRING(str) \
-    PerfMonitor::PerfRecord<std::string> _pm_(str);
-
-#define PERF_RECODE_FUNC    \
-    PerfMonitor::PerfRecord<std::string> _pm_(__FUNCTION__);
-
-void FuncA()
-{
-    PERF_RECODE_FUNC;
-    cout << "sikdkfkkkdjjlkd" << endl;
-    Sleep(100);
-}
-void FuncB()
-{
-    PERF_RECODE_FUNC;
-//     void* p = INSTANCE_SINGLETON_S(AllocVirtual<>).Alloc(100);
-}
-
 // class Serv
 // {
 // protected:
@@ -208,262 +117,87 @@ void FuncB()
 //     //boost::function<void ()> m_f;
 // };
 
-
-
-
-#define SYS_PAGE_SIZE           0x1000
-#define SYS_MEM_GRANULARITY     0x10000
-
-template<size_t SIZE_ALLOC, size_t MEM_NUMS = 0x400, size_t GRANULARITY=16*SYS_MEM_GRANULARITY-SYS_PAGE_SIZE>
-class AllocVirtual
+//this is  A producer/consumer design pattern
+namespace PatternPC
 {
-    struct PageMem
+    template<typename T>
+    class PtnStorage
     {
-        LPVOID m_base;
-        LPVOID m_cur;
-
-        PageMem(LPVOID addr):m_base(addr), m_cur(addr){}
-        PageMem():m_base(0), m_cur(0){}
-
-        LPVOID Alloc()
+    public:
+        void Add(T* p)
         {
-            if ((UINT64)m_cur + SIZE_ALLOC > (UINT64)m_base + GRANULARITY)
-                return NULL;
-            LPVOID ret = m_cur;
-            m_cur = (LPVOID)((UINT64)m_cur + SIZE_ALLOC);
-            return ret;
+            G_LOCK(LockSpin, m_lock);
+            m_vecs.push_back(p);
         }
-        bool Check(LPVOID addr) const
-        {
-            if (addr < m_base || addr >= m_cur)
-                return false;
-            if (((UINT64)addr-(UINT64)m_base)%SIZE_ALLOC != 0)
-                return false;
-            return true;
-        }
+    private:
+        LockSpin        m_lock;
+        std::vector<T*> m_vecs;
     };
-public:
-    AllocVirtual():m_BaseAddrs()
-    {}
-    LPVOID Alloc()
+
+    template<typename T>
+    class PtnConsumer
     {
-        PageMem* pPM = m_BaseAddrs.end();
-        if (!pPM)
+    public:
+        void Proc()
         {
-            AllocPage();
-            return Alloc();
+            T* p = INSTANCE_SINGLETON_S(PtnStorage<T>).Get();
+            Excute(p);
         }
-
-        LPVOID ret = pPM->Alloc();
-        if (!ret)
-        {
-            AllocPage();
-            return Alloc();
-        }
-        return ret;
-    }
-    void AllocPage()
-    {
-        AssertThrow(!m_BaseAddrs.full(), throw 1);
-        LPVOID p = VirtualAlloc(NULL, GRANULARITY, MEM_COMMIT, PAGE_READWRITE);
-        AssertThrow(p, throw 1);
-        m_BaseAddrs.insert(p);
-    }
-    bool Check(LPVOID addr)
-    {
-        FOR_0_NUM(i, m_BaseAddrs.size())
-        {
-            if(m_BaseAddrs[i].Check(addr))
-                return true;
-        }
-        return false;
-    }
-private:
-    CompactArray<PageMem, MEM_NUMS> m_BaseAddrs;
-};
-
-#pragma pack(push,4)
-template<typename T>
-struct PoolObj
-{
-    PoolObj* _last;
-    T        _obj;
-#ifdef MEM_TEST
-    UINT32   reverse;
-#endif
-};
-
-template<typename T, typename MemHolder = AllocVirtual<sizeof(PoolObj<T>)> >
-class ListPool;
-
-template<typename T, typename MemHolder>
-class ListPool
+        virtual void Excute(T*) = 0;
+    };
+}
+struct LogRecord
 {
     enum
     {
-        REVERSE_DATA = 0xcdcdcdcd,
+        MAX_STR_SIZE    = 256,
     };
-
-public:
-    typedef T* ptr_type;
-    typedef T valuetype;
-    typedef PoolObj<T> PoolObjType;
-
-    class ObjHolder
-    {
-    public:
-        ObjHolder(T* _p)
-        {
-            m_obj = (PoolObjType*)((char*)_p - sizeof(PoolObjType*));
-        }
-    public:
-        PoolObjType* m_obj;
-    };
-public:
-
-    ListPool():m_tail(NULL),m_used(0),m_totle(0){}
-    ptr_type Acquire()
-    {
-        ptr_type objptr = AcquireNC();
-        return new(objptr) T();
-    }
-    void Release(ptr_type _obj)
-    {
-        _obj->~T();
-        ReleaseND(_obj);
-    }
-    //No Construct
-    ptr_type AcquireNC()
-    {
-        if (!m_tail)
-        {
-            m_tail = (PoolObjType*)m_mems.Alloc();
-            AssertThrow(m_tail, throw 1);
-            m_tail->_last = NULL;
-#ifdef MEM_TEST
-            m_tail->reverse = REVERSE_DATA;
-#endif
-            ++m_totle;
-            return AcquireNC();
-        }
-        PoolObjType* pRet = m_tail;
-        m_tail = m_tail->_last;
-        pRet->_last = NULL;
-#ifdef MEM_TEST
-        memset(&pRet->_obj, 0, sizeof(pRet->_obj));
-        AssertThrow(pRet->reverse == REVERSE_DATA, {pRet->reverse=REVERSE_DATA;throw 1;});
-#endif
-        ++m_used;
-        return &pRet->_obj;
-    }
-    //no destruct
-    void ReleaseND(ptr_type _obj)
-    {
-        ObjHolder h(_obj);
-#ifdef MEM_TEST
-        AssertThrow(m_mems.Check(h.m_obj), throw 1);
-        memset(_obj, 0, sizeof(T));
-        AssertThrow(h.m_obj->_last == NULL, {h.m_obj->_last=NULL;throw 1;});
-        AssertThrow(h.m_obj->reverse == REVERSE_DATA, {h.m_obj->reverse=REVERSE_DATA;throw 1;});
-#endif
-        h.m_obj->_last = m_tail;
-        m_tail = h.m_obj;
-        --m_used;
-    }
-
-private:
-    PoolObjType*    m_tail;
-    UINT32      m_used;
-    UINT32      m_totle;
-    MemHolder   m_mems;
+    int         m_LogLevel;
+    DWORD       m_ThreadID;
+    char        m_LogBuff[MAX_STR_SIZE];
 };
-#pragma pack(pop)
-
-struct TestStruct
+class LogMgr : public PatternPC::PtnConsumer<LogRecord>
 {
-    TestStruct(){}
-    char objs[0x2000];
+public:
+    static void WriteLog(int loglv, char* fmt, ...)
+    {
+        if (INSTANCE_SINGLETON_D(LogMgr).Filter(loglv))
+            return;
+
+        LogRecord* pRecode = new LogRecord;
+
+        va_list argptr;
+        va_start(argptr, fmt);
+        vsnprintf_s(pRecode->m_LogBuff, LogRecord::MAX_STR_SIZE, _TRUNCATE, fmt, argptr);
+        va_end(argptr);
+
+        pRecode->m_LogLevel = loglv;
+        pRecode->m_ThreadID = GetCurrentThreadId();
+        INSTANCE_SINGLETON_S(PatternPC::PtnStorage<LogRecord>).Add(pRecode);
+    }
+
+    virtual void Excute(LogRecord* pRecord)
+    {
+        if (!pRecord) return;
+
+        delete pRecord;
+    }
+
+    // true:discard the log
+    bool Filter(int loglv)
+    {
+        return (m_LogMask&TOMASK(loglv))==0;
+    }
+private:
+
+    int m_LogMask;
 };
 
-
-// void* operator new(size_t _size, string ss)
-// {
-//     std::cout << "GLOBE" << _size << std::endl;
-//     return ::operator new(_size);
-// }
-// class A
-// {
-//     char a[10];
-// public:
-//     void operator delete(void* p, size_t _size)
-//     {
-//         std::cout << "~A" << _size << std::endl;
-//         return ::operator delete(p);
-//     }
-//         void* operator new(size_t _size)
-//         {
-//             std::cout << "A" << _size << std::endl;
-//             return ::operator new(_size);
-//         }
-// };
-// 
-// class B: public A
-// {
-//     char b[12];
-// 
-// };
-// class C: public A
-// {
-//     char c[18];
-// 
-// };
-// 
-// class E: public B
-// {
-//     char e[128];
-// 
-// };
+#define LOG_TEST(fmt,...)    INSTANCE_SINGLETON_D(LogMgr).WriteLog(1,fmt,__VA_ARGS__)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
-//     ListPool<TestStruct> lp;
-//     TestStruct* *pointers = new TestStruct*[10000];
-//     {
-//         PERF_RECODE_STRING("POOLA");
-//         FOR_0_NUM(i,10000)
-//         {
-//             TestStruct* p = lp.Acquire();
-//             pointers[i] = p;
-//         }
-//     }
-//     {
-//         PERF_RECODE_STRING("POOLD");
-//         FOR_0_NUM(i,10000)
-//         {
-//             lp.Release(pointers[i]);
-//         }
-//     }
-//     {
-//         PERF_RECODE_STRING("NEW");
-//         FOR_0_NUM(i,10000)
-//         {
-//             TestStruct* p = new TestStruct;
-//             pointers[i] = p;
-//             //   delete p;
-//             //             std::cout << std::hex << p << std::endl;
-//         }
-//     }
-//     {
-//         PERF_RECODE_STRING("DELETE");
-//         FOR_0_NUM(i,10000)
-//         {
-//             delete pointers[i];
-//         }
-//     }
-// 
-//     PERF_RECODE_STRING_RESULT(std::cout);
-
+    LOG_TEST( "kskdjkf%d", 1199223);
 //     ListPool<INT>  a;
 //     INT* b = a.Acquire();
     //     a.Release(b);
@@ -532,7 +266,6 @@ int _tmain(int argc, _TCHAR* argv[])
     //    }
     //} while (0);
 
-    //BenchMark::BM_Serialize();
     system("pause");
     return 0;
 }

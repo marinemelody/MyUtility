@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "BenchMark.h"
+#include "Functional/Perf.h"
 
 using namespace std; 
 
@@ -112,4 +113,62 @@ void BenchMark::BM_CryptoPP()
     Weak::MD5 md5test;
     md5test.Update((const byte*)teststr.c_str(),teststr.size());
     md5test.Final((byte*)md5out);
+}
+
+
+#include "Functional/Memory.h"
+void BenchMark::BM_ListPool()
+{
+#define TEST_NUM 10000
+    struct TestStruct
+    {
+        TestStruct(){}
+        char objs[0x200];
+    };
+
+    ListPool<TestStruct> lp;
+    TestStruct* *pointers = new TestStruct*[TEST_NUM];
+    {
+        PERF_RECODE_STRING("POOLA");
+        FOR_0_NUM(i,TEST_NUM)
+        {
+            TestStruct* p = lp.Acquire();
+            pointers[i] = p;
+        }
+    }
+    {
+        PERF_RECODE_STRING("POOLD");
+        FOR_0_NUM(i,TEST_NUM)
+        {
+            lp.Release(pointers[i]);
+        }
+    }
+    {
+        PERF_RECODE_STRING("POOLRA");
+        FOR_0_NUM(i,TEST_NUM-1)
+        {
+            TestStruct* p = lp.Acquire();
+            pointers[i] = p;
+        }
+    }
+    {
+        PERF_RECODE_STRING("NEW");
+        FOR_0_NUM(i,TEST_NUM)
+        {
+            TestStruct* p = new TestStruct;
+            pointers[i] = p;
+            //   delete p;
+            //             std::cout << std::hex << p << std::endl;
+        }
+    }
+    {
+        PERF_RECODE_STRING("DELETE");
+        FOR_0_NUM(i,TEST_NUM)
+        {
+            delete pointers[i];
+        }
+    }
+
+    PERF_RECODE_STRING_RESULT(std::cout);
+
 }

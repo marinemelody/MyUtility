@@ -139,14 +139,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Dbghelp.lib"
+				AdditionalDependencies="Dbghelp.lib cryptlib.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\python\lib"
+				AdditionalLibraryDirectories="..\..\python\lib;../../cryptopp/Win32/Output/Release"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
+				Profile="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -312,6 +313,10 @@
 				</File>
 				<File
 					RelativePath="..\Functional\Noncopyable.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\Perf.h"
 					>
 				</File>
 				<File

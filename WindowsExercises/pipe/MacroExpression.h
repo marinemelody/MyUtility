@@ -10,5 +10,6 @@
 //FOR_0_NUM
 #define FOR_0_NUM(arg, end) for(size_t i=0;i<end;++i)
 
-
+//convert a number to mask
+#define TOMASK(x)   (1<<x)
 

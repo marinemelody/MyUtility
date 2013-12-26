@@ -117,6 +117,159 @@ private:
 //     //boost::function<void ()> m_f;
 // };
 
+class ThreadWork
+{
+
+};
+
+class Thread
+{
+    enum
+    {
+        THREAD_STATE_INIT       = 0,
+        THREAD_STATE_READY      = 1,
+        THREAD_STATE_RUN        = 2,
+        THREAD_STATE_SUSPEND    = 3,
+        THREAD_STATE_CLOSING    = 4,
+        THREAD_STATE_TERM       = 5,
+
+        THREAD_SLICE_LIMIT      = 50,
+    };
+public:
+    Thread():m_Thread(NULL),m_ThreadID(0),m_status(THREAD_STATE_INIT),m_LoopCount(0),m_TimeSlice(0){}
+    ~Thread()
+    {
+        if (m_Thread!=NULL)
+        {
+            CloseHandle(m_Thread);
+        }
+    }
+    //apply thread resource
+    bool init(std::string const&name, UINT32 timeslice=0, std::string const&desc="")
+    {
+        if (m_status != THREAD_STATE_INIT)
+            return false;
+        m_Thread = CreateThread(NULL, 0, ProcFunc, this, CREATE_SUSPENDED, &m_ThreadID);
+        if (m_Thread==NULL)
+            return false;
+        m_ThreadName = name;
+        m_ThreadDesc = desc;
+        m_TimeSlice  = timeslice;
+        m_status     = THREAD_STATE_READY;
+        return true;
+    }
+    //
+    bool start()
+    {
+        if (m_status != THREAD_STATE_READY)
+            return false;
+
+        DWORD ret = ResumeThread(m_Thread);
+        if (ret==(DWORD)-1)
+            return false;
+
+        m_status = THREAD_STATE_RUN;
+        return true;
+    }
+
+    bool Schedule(ThreadWork& work)
+    {
+        if (m_status != THREAD_STATE_READY)
+            return false;
+
+        return true;
+    }
+
+    bool Suspend()
+    {
+        if (m_status != THREAD_STATE_RUN)
+            return false;
+
+        DWORD ret = SuspendThread(m_Thread);
+        if (ret==(DWORD)-1)
+            return false;
+
+        m_status = THREAD_STATE_SUSPEND;
+        return true;
+    }
+    bool Resume()
+    {
+        if (m_status != THREAD_STATE_SUSPEND)
+            return false;
+
+        m_status = THREAD_STATE_RUN;
+        DWORD ret = ResumeThread(m_Thread);
+        if (ret==(DWORD)-1)
+        {
+            m_status = THREAD_STATE_SUSPEND;
+            return false;
+        }
+
+        return true;
+    }
+    //softy close
+    bool Closing()
+    {
+        if (m_status != THREAD_STATE_RUN)
+            return false;
+
+        m_status = THREAD_STATE_CLOSING;
+        return true;
+    }
+private:
+    HANDLE          m_Thread;
+    DWORD           m_ThreadID;
+    std::string     m_ThreadName;
+    std::string     m_ThreadDesc;
+    volatile UINT32 m_status;
+    UINT64          m_LoopCount;
+    volatile UINT32 m_TimeSlice;
+protected:
+    void run()
+    {
+        std::cout<< "THREAD TESTING....." << endl;
+    }
+    static DWORD WINAPI ProcFunc(LPVOID lpParameter)
+    {
+        Thread* pThread = (Thread*)lpParameter;
+        assert(pThread);
+
+        if (pThread->m_TimeSlice>THREAD_SLICE_LIMIT)
+        {
+            while(pThread->m_status==THREAD_STATE_RUN)
+            {
+                UINT32 nowtick = GetTickCount();
+
+                ++pThread->m_LoopCount;
+                pThread->run();
+
+                UINT32 endtick = GetTickCount();
+                UINT32 deltatick = endtick-nowtick;
+                if (deltatick < THREAD_SLICE_LIMIT)
+                {
+                    Sleep(THREAD_SLICE_LIMIT - deltatick);
+                }
+            }
+        }
+        else
+        {
+            while(pThread->m_status==THREAD_STATE_RUN)
+            {
+                ++pThread->m_LoopCount;
+                pThread->run();
+            }
+        }
+
+        pThread->m_status = THREAD_STATE_TERM;
+        return 0;
+    }
+};
+
+class ThreadMonitor
+{
+
+};
+
 //this is  A producer/consumer design pattern
 namespace PatternPC
 {
@@ -200,6 +353,10 @@ private:
 int _tmain(int argc, _TCHAR* argv[])
 {
     LOG_TEST( "kskdjkf%d", 1199223);
+
+    Thread t;
+    t.init("gogogo");
+    t.start();
 //     ListPool<INT>  a;
 //     INT* b = a.Acquire();
     //     a.Release(b);

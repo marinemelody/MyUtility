@@ -243,37 +243,38 @@ TYPE_PTR GetCurIPReg()
 }
 #endif
 
-#if defined(_WIN32)
-//获取当前块分配大小
-#ifdef _DEBUG
-#define _CRTBLD
-#include <dbgint.h>
-int GetMemSize(void* p)
-{
-    _CrtMemBlockHeader* _h = (_CrtMemBlockHeader*)((char*)p-sizeof(_CrtMemBlockHeader));
-
-    return _h->nDataSize;
-}
-#else
-#pragma pack(1)
-struct _HEAP_ENTRY
-{
-    UINT16  _size_granularity;
-    UINT16  _pre_size;
-    UINT8   _SmallTagIndex;
-    UINT8   _flags;
-    UINT8   _unused_bytes;
-    UINT8   _SegmentIndex;
-};
-#pragma pack()
-int GetMemSize(void* p)
-{
-    _HEAP_ENTRY* _he = (_HEAP_ENTRY*)((char*)p-8);
-
-    return _he->_size_granularity*8 - _he->_unused_bytes;
-}
-#endif
-
-#endif//defined(_WIN32)
+// #if defined(_WIN32)
+// //获取当前块分配大小
+// #ifdef _DEBUG
+// #define _CRTBLD
+// #include <crtdbg.h>
+// #include <dbgint.h>
+// int GetMemSize(void* p)
+// {
+//     _CrtMemBlockHeader* _h = (_CrtMemBlockHeader*)((char*)p-sizeof(_CrtMemBlockHeader));
+// 
+//     return _h->nDataSize;
+// }
+// #else
+// #pragma pack(1)
+// struct _HEAP_ENTRY
+// {
+//     UINT16  _size_granularity;
+//     UINT16  _pre_size;
+//     UINT8   _SmallTagIndex;
+//     UINT8   _flags;
+//     UINT8   _unused_bytes;
+//     UINT8   _SegmentIndex;
+// };
+// #pragma pack()
+// int GetMemSize(void* p)
+// {
+//     _HEAP_ENTRY* _he = (_HEAP_ENTRY*)((char*)p-8);
+// 
+//     return _he->_size_granularity*8 - _he->_unused_bytes;
+// }
+// #endif
+// 
+// #endif//defined(_WIN32)
 
 

@@ -21,6 +21,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
+			UseOfATL="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -64,7 +65,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Dbghelp.lib cryptlib.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\python\lib;../../cryptopp/Win32/Output/Debug"
+				AdditionalLibraryDirectories="../../cryptopp/Win32/Output/Debug;../../python/lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				LargeAddressAware="0"
@@ -320,11 +321,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\PyTrace.cpp"
+					RelativePath="..\Functional\PyTrace.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\PyTrace.h"
+					RelativePath="..\Functional\PyTrace.h"
 					>
 				</File>
 				<File

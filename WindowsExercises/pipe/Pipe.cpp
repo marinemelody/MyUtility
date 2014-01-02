@@ -119,7 +119,8 @@ private:
 
 class ThreadWork
 {
-
+public:
+    virtual void run() = 0;
 };
 
 class Thread
@@ -145,7 +146,7 @@ public:
         }
     }
     //apply thread resource
-    bool init(std::string const&name, UINT32 timeslice=0, std::string const&desc="")
+    bool init(std::string const&name, ThreadWork& work, UINT32 timeslice=0, std::string const&desc="")
     {
         if (m_status != THREAD_STATE_INIT)
             return false;
@@ -153,6 +154,7 @@ public:
         if (m_Thread==NULL)
             return false;
         m_ThreadName = name;
+        m_pWork      = &work;
         m_ThreadDesc = desc;
         m_TimeSlice  = timeslice;
         m_status     = THREAD_STATE_READY;
@@ -169,14 +171,7 @@ public:
             return false;
 
         m_status = THREAD_STATE_RUN;
-        return true;
-    }
-
-    bool Schedule(ThreadWork& work)
-    {
-        if (m_status != THREAD_STATE_READY)
-            return false;
-
+        INSTANCE_SINGLETON_S(ThreadMonitor).Monitor(*this);
         return true;
     }
 
@@ -224,10 +219,12 @@ private:
     volatile UINT32 m_status;
     UINT64          m_LoopCount;
     volatile UINT32 m_TimeSlice;
+    ThreadWork*     m_pWork;
 protected:
     void run()
     {
-        std::cout<< "THREAD TESTING....." << endl;
+        m_pWork->run();
+        std::cout<< "THREAD TESTING....." << m_ThreadName << endl;
     }
     static DWORD WINAPI ProcFunc(LPVOID lpParameter)
     {
@@ -241,7 +238,7 @@ protected:
                 UINT32 nowtick = GetTickCount();
 
                 ++pThread->m_LoopCount;
-                pThread->run();
+                pThread->m_pWork->run();
 
                 UINT32 endtick = GetTickCount();
                 UINT32 deltatick = endtick-nowtick;
@@ -256,7 +253,7 @@ protected:
             while(pThread->m_status==THREAD_STATE_RUN)
             {
                 ++pThread->m_LoopCount;
-                pThread->run();
+                pThread->m_pWork->run();
             }
         }
 
@@ -267,7 +264,32 @@ protected:
 
 class ThreadMonitor
 {
+public:
+    void Monitor(Thread& t)
+    {
 
+    }
+    //should be called by main thread
+    void Monitoring()
+    {
+
+    }
+    //report thread is now terminated
+    void Terminated(Thread& t)
+    {
+
+    }
+    //report thread's current Call stack 
+    void StackCall(Thread& t)
+    {
+
+    }
+    //report thread is now dead lock 
+    void DeadLock(Thread& t)
+    {
+
+    }
+private:
 };
 
 //this is  A producer/consumer design pattern
@@ -312,6 +334,7 @@ struct LogRecord
 class LogMgr : public PatternPC::PtnConsumer<LogRecord>
 {
 public:
+    LogMgr():m_LogMask(0xFFFFFFFF){}
     static void WriteLog(int loglv, char* fmt, ...)
     {
         if (INSTANCE_SINGLETON_D(LogMgr).Filter(loglv))
@@ -344,7 +367,6 @@ public:
         return (m_LogMask&TOMASK(loglv))==0;
     }
 private:
-
     int m_LogMask;
 };
 
@@ -355,8 +377,13 @@ int _tmain(int argc, _TCHAR* argv[])
     LOG_TEST( "kskdjkf%d", 1199223);
 
     Thread t;
-    t.init("gogogo");
+    t.init("gogogo",100);
     t.start();
+
+
+    Thread t2;
+    t2.init("rerere",100);
+    t2.start();
 //     ListPool<INT>  a;
 //     INT* b = a.Acquire();
     //     a.Release(b);

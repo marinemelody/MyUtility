@@ -43,6 +43,7 @@ public:
     ~DbgModule(void);
     //Êä³öµ÷ÓÃÖ¡
     int ExportTraceBack(LPEXCEPTION_POINTERS pExp, UINT32 MAX_TRACE_STACK=10);
+    int ExportTraceBack(LPCONTEXT pContext, UINT32 MAX_TRACE_STACK=10);
     int ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 MAX_TRACE_STACK=10);
 private:
     ModuleMgr   m_modules;

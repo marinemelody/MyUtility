@@ -27,6 +27,6 @@ public:
     LockGuard(LOCKTYPE& l)
     {}
 };
-#define  G_LOCK(t,a) LockGuard<t> _g_##a(a);
+#define  G_LOCK(t,a) LockGuard<t> _g_##a(a)
 
 

@@ -120,6 +120,10 @@ int DbgModule::ExportTraceBack(LPEXCEPTION_POINTERS pExp, UINT32 MAX_TRACE_STACK
 {
     return ExportTraceBack(pExp->ContextRecord->Eip, pExp->ContextRecord->Ebp, pExp->ContextRecord->Esp, MAX_TRACE_STACK);
 }
+int DbgModule::ExportTraceBack(LPCONTEXT pContext, UINT32 MAX_TRACE_STACK/*=10*/)
+{
+    return ExportTraceBack(pContext->Eip, pContext->Ebp, pContext->Esp, MAX_TRACE_STACK);
+}
 
 int DbgModule::ExportTraceBack(DWORD64 _eip, DWORD64 _ebp, DWORD64 _esp, UINT32 MAX_TRACE_STACK/*=10*/)
 {

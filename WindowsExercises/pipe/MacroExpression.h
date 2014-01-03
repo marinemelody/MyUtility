@@ -12,4 +12,5 @@
 
 //convert a number to mask
 #define TOMASK(x)   (1<<x)
+#define HAS_MASK(f,x)   (f&(1<<x))
 

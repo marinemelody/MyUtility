@@ -2,7 +2,7 @@
 
 //AssertThrow
 #ifdef _DEBUG
-#define AssertThrow(expr,throwData) assert(expr);
+#define AssertThrow(expr,throwexpr) assert(expr);
 #else
 #define AssertThrow(expr,throwexpr) if (!(expr)) {throwexpr;};
 #endif

@@ -309,6 +309,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\Functional\LogSet.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\LogSet.h"
+					>
+				</File>
+				<File
 					RelativePath="..\Functional\Memory.h"
 					>
 				</File>
@@ -338,6 +346,18 @@
 				</File>
 				<File
 					RelativePath="..\Functional\TBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\ThreadMonitor.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\ThreadMonitor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\Functional\TimerSet.h"
 					>
 				</File>
 			</Filter>

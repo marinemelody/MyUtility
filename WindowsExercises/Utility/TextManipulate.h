@@ -31,6 +31,7 @@ namespace TextManipulate
     {
         static TCHAR m_msg[_MSG_BUFF_SIZE];
         FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errcode, 0, m_msg, _MSG_BUFF_SIZE, NULL);
+        m_msg[_MSG_BUFF_SIZE-1] = 0;
         return m_msg;
     }
 /************************************************************************/
